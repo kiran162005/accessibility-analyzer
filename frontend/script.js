@@ -4,138 +4,86 @@ async function analyze() {
   const url = document.getElementById("urlInput").value;
   const result = document.getElementById("result");
 
-  if (!url) {
-    alert("Please enter a URL");
-    return;
-  }
+  if (!url) return alert("Enter URL");
 
-  result.innerHTML = `<div class="card">⏳ Analyzing accessibility...</div>`;
+  result.innerHTML = `<div class="card">⏳ Analyzing...</div>`;
 
-  try {
-    const res = await fetch(
-      `http://localhost:3000/analyze?url=${encodeURIComponent(url)}`
-    );
-    const data = await res.json();
+  const res = await fetch(`http://localhost:3000/analyze?url=${encodeURIComponent(url)}`);
+  const data = await res.json();
 
-    const score = data.accessibilityScore;
+  const score = data.accessibilityScore;
+  const scoreClass = score >= 80 ? "score-good" : score >= 50 ? "score-medium" : "score-bad";
 
-    let scoreClass = "score-good";
-    let label = "Good Accessibility";
-
-    if (score < 80) {
-      scoreClass = "score-medium";
-      label = "Needs Improvement";
-    }
-    if (score < 50) {
-      scoreClass = "score-bad";
-      label = "Poor Accessibility";
-    }
-
-    /* ---------- BASE LAYOUT ---------- */
-    result.innerHTML = `
-      <div class="card score-section">
-        <div class="score-circle ${scoreClass}">${score}</div>
-        <div class="score-info">
-          <h2>${label}</h2>
-          <p>${data.violationsCount} accessibility issues detected</p>
-        </div>
+  result.innerHTML = `
+    <div class="card score-section">
+      <div class="score-circle ${scoreClass}">${score}</div>
+      <div>
+        <h2>${score >= 80 ? "Good" : "Needs Improvement"}</h2>
+        <p>${data.violationsCount} issues found</p>
       </div>
+    </div>
 
-      <!-- CATEGORY SCORES -->
-      <div class="card summary">
-        ${Object.entries(data.categoryScores).map(
-          ([key, value]) => `
-          <div class="summary-card">
-            <h3>${value}</h3>
-            <p>${key.charAt(0).toUpperCase() + key.slice(1)}</p>
-          </div>
-        `
+    <div class="card summary">
+      ${Object.entries(data.categoryScores || {}).map(
+        ([k, v]) => `<div class="summary-card"><h3>${v}</h3><p>${k}</p></div>`
+      ).join("")}
+    </div>
+
+    <div class="card">
+      <h2>Keyboard Accessibility</h2>
+      <div class="kb-box">
+        Status: <strong>${data.keyboardAccessibility.status}</strong>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Issues</h2>
+      <div class="filters">
+        ${["all","critical","serious","moderate"].map(f =>
+          `<button class="filter-btn ${f==="all"?"active":""}" onclick="setFilter('${f}')">${f}</button>`
         ).join("")}
       </div>
+      <div id="issues"></div>
 
-      <!-- ISSUE DETAILS -->
-      <div class="card">
-        <h2>Issue Details</h2>
+      <button class="download-btn" onclick="downloadPDF('${url}')">
+        Download PDF Report
+      </button>
+    </div>
+  `;
 
-        <div class="filters">
-          <button class="filter-btn active" data-filter="all">All</button>
-          <button class="filter-btn" data-filter="critical">Critical</button>
-          <button class="filter-btn" data-filter="serious">Serious</button>
-          <button class="filter-btn" data-filter="moderate">Moderate</button>
+  renderIssues(data.violations);
+}
+
+function setFilter(f) {
+  currentFilter = f;
+  document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+  event.target.classList.add("active");
+  renderIssues(window.lastViolations);
+}
+
+function renderIssues(violations) {
+  window.lastViolations = violations;
+  const box = document.getElementById("issues");
+  box.innerHTML = "";
+
+  violations
+    .filter(v => currentFilter === "all" || v.impact === currentFilter)
+    .forEach((v, i) => {
+      const div = document.createElement("div");
+      div.className = `issue ${v.impact}`;
+      div.innerHTML = `
+        <div class="issue-header">${i+1}. ${v.id} <span>+</span></div>
+        <div class="issue-details">
+          ${v.description}<br/>
+          Affected: ${v.nodesAffected}<br/>
+          <a href="${v.helpUrl}" target="_blank">Fix guide</a>
         </div>
-
-        <div id="issuesContainer"></div>
-      </div>
-    `;
-
-    const issuesContainer = document.getElementById("issuesContainer");
-
-    function renderIssues() {
-      issuesContainer.innerHTML = "";
-
-      const filtered = data.violations.filter(v => {
-        if (currentFilter === "all") return true;
-        return v.impact === currentFilter;
-      });
-
-      if (filtered.length === 0) {
-        issuesContainer.innerHTML = `<p>No issues for this filter.</p>`;
-        return;
-      }
-
-      filtered.forEach((v, index) => {
-        const issue = document.createElement("div");
-        issue.className = `issue ${v.impact}`;
-
-        issue.innerHTML = `
-          <div class="issue-header">
-            <div>
-              <span class="badge ${v.impact}">
-                ${v.impact.toUpperCase()}
-              </span>
-              <strong>${index + 1}. ${v.id}</strong>
-            </div>
-            <div class="toggle">+</div>
-          </div>
-
-          <div class="issue-details">
-            ${v.description}<br /><br />
-            <strong>Affected elements:</strong> ${v.nodesAffected}<br />
-            <a href="${v.helpUrl}" target="_blank">Learn how to fix</a>
-          </div>
-        `;
-
-        issue.querySelector(".issue-header").addEventListener("click", () => {
-          const open = issue.classList.contains("open");
-
-          document.querySelectorAll(".issue").forEach(i => {
-            i.classList.remove("open");
-            i.querySelector(".toggle").textContent = "+";
-          });
-
-          if (!open) {
-            issue.classList.add("open");
-            issue.querySelector(".toggle").textContent = "−";
-          }
-        });
-
-        issuesContainer.appendChild(issue);
-      });
-    }
-
-    renderIssues();
-
-    document.querySelectorAll(".filter-btn").forEach(btn => {
-      btn.addEventListener("click", () => {
-        document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
-        currentFilter = btn.dataset.filter;
-        renderIssues();
-      });
+      `;
+      div.querySelector(".issue-header").onclick = () => div.classList.toggle("open");
+      box.appendChild(div);
     });
+}
 
-  } catch (err) {
-    console.error(err);
-    result.innerHTML = `<div class="card">❌ Failed to analyze website</div>`;
-  }
+function downloadPDF(url) {
+  window.open(`http://localhost:3000/report?url=${encodeURIComponent(url)}`, "_blank");
 }

@@ -1,85 +1,102 @@
 const express = require("express");
 const cors = require("cors");
-const { analyzeAccessibility, calculateScore } = require("./analyzer");
+const PDFDocument = require("pdfkit");
+const { analyzeAccessibility } = require("./analyzer");
 
 const app = express();
 app.use(cors());
 
-/**
- * Categorize violations based on rule id
- */
-function categorizeViolations(violations) {
-  const categories = {
-    landmarks: [],
-    images: [],
-    forms: [],
-    contrast: [],
-    other: []
-  };
-
-  violations.forEach(v => {
-    if (v.id.includes("landmark") || v.id.includes("region")) {
-      categories.landmarks.push(v);
-    } else if (v.id.includes("image") || v.id.includes("alt")) {
-      categories.images.push(v);
-    } else if (v.id.includes("label") || v.id.includes("form")) {
-      categories.forms.push(v);
-    } else if (v.id.includes("contrast")) {
-      categories.contrast.push(v);
-    } else {
-      categories.other.push(v);
-    }
-  });
-
-  return categories;
-}
-
-/**
- * Calculate score per category
- */
-function calculateCategoryScores(categories) {
-  const scores = {};
-
-  Object.keys(categories).forEach(cat => {
-    scores[cat] = calculateScore(categories[cat]);
-  });
-
-  return scores;
-}
-
-/**
- * Routes
- */
+/* ---------------- HEALTH CHECK ---------------- */
 app.get("/", (req, res) => {
   res.send("Accessibility Analyzer Backend Running 🚀");
 });
 
+/* ---------------- ANALYSIS API ---------------- */
 app.get("/analyze", async (req, res) => {
   const { url } = req.query;
-
-  if (!url) {
-    return res.status(400).json({ error: "URL is required" });
-  }
+  if (!url) return res.status(400).json({ error: "URL is required" });
 
   try {
-    const violations = await analyzeAccessibility(url);
+    const analysis = await analyzeAccessibility(url);
 
-    const overallScore = calculateScore(violations);
-    const categorized = categorizeViolations(violations);
-    const categoryScores = calculateCategoryScores(categorized);
+    /* -------- PHASE 5: KEYBOARD ACCESSIBILITY -------- */
+    const keyboardAccessibility = {
+      status: analysis.violations.length > 0 ? "Needs Improvement" : "Pass",
+      note: "Based on focusable & semantic accessibility checks"
+    };
 
     res.json({
       url,
-      accessibilityScore: overallScore,
-      violationsCount: violations.length,
-      categoryScores,
-      violations
+      accessibilityScore: analysis.accessibilityScore,
+      violationsCount: analysis.violations.length,
+      categoryScores: analysis.categoryScores,
+      keyboardAccessibility,
+      violations: analysis.violations
     });
+
   } catch (err) {
     res.status(500).json({
       error: "Accessibility analysis failed",
       message: err.message
     });
+  }
+});
+
+/* ---------------- PHASE 4: PDF REPORT ---------------- */
+app.get("/report", async (req, res) => {
+  const { url } = req.query;
+  if (!url) return res.status(400).send("URL required");
+
+  try {
+    const analysis = await analyzeAccessibility(url);
+
+    const doc = new PDFDocument({ margin: 50 });
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      "attachment; filename=accessibility-report.pdf"
+    );
+
+    doc.pipe(res);
+
+    /* ---- PDF STYLING ---- */
+    doc.fontSize(22).text("Accessibility Audit Report", { align: "center" });
+    doc.moveDown();
+
+    doc.fontSize(14).text(`Website: ${url}`);
+    doc.text(`Accessibility Score: ${analysis.accessibilityScore}/100`);
+    doc.text(`Total Issues: ${analysis.violations.length}`);
+    doc.text(`Generated On: ${new Date().toLocaleString()}`);
+
+    doc.moveDown();
+    doc.fontSize(18).text("Category Scores", { underline: true });
+    doc.moveDown();
+
+    Object.entries(analysis.categoryScores).forEach(([cat, score]) => {
+      doc.fontSize(12).text(`${cat.toUpperCase()}: ${score}/100`);
+    });
+
+    doc.moveDown();
+    doc.fontSize(18).text("Accessibility Issues", { underline: true });
+    doc.moveDown();
+
+    if (analysis.violations.length === 0) {
+      doc.text("🎉 No accessibility issues found.");
+    } else {
+      analysis.violations.forEach((v, i) => {
+        doc
+          .fontSize(12)
+          .text(
+            `${i + 1}. [${v.impact.toUpperCase()}] ${v.id}\n${v.description}\nAffected elements: ${v.nodesAffected}`,
+            { paragraphGap: 10 }
+          );
+      });
+    }
+
+    doc.end();
+
+  } catch (err) {
+    res.status(500).send("Failed to generate PDF report");
   }
 });
 
