@@ -1,4 +1,4 @@
-let currentFilter = "all"; // all | critical | serious | moderate
+let currentFilter = "all";
 
 async function analyze() {
   const url = document.getElementById("urlInput").value;
@@ -31,7 +31,7 @@ async function analyze() {
       label = "Poor Accessibility";
     }
 
-    // ---------- BASE UI ----------
+    /* ---------- BASE LAYOUT ---------- */
     result.innerHTML = `
       <div class="card score-section">
         <div class="score-circle ${scoreClass}">${score}</div>
@@ -41,25 +41,22 @@ async function analyze() {
         </div>
       </div>
 
+      <!-- CATEGORY SCORES -->
       <div class="card summary">
-        <div class="summary-card">
-          <h3>${data.violationsCount}</h3>
-          <p>Total Issues</p>
-        </div>
-        <div class="summary-card">
-          <h3>${score}</h3>
-          <p>Accessibility Score</p>
-        </div>
-        <div class="summary-card">
-          <h3>WCAG</h3>
-          <p>Guideline Based</p>
-        </div>
+        ${Object.entries(data.categoryScores).map(
+          ([key, value]) => `
+          <div class="summary-card">
+            <h3>${value}</h3>
+            <p>${key.charAt(0).toUpperCase() + key.slice(1)}</p>
+          </div>
+        `
+        ).join("")}
       </div>
 
+      <!-- ISSUE DETAILS -->
       <div class="card">
         <h2>Issue Details</h2>
 
-        <!-- FILTERS -->
         <div class="filters">
           <button class="filter-btn active" data-filter="all">All</button>
           <button class="filter-btn" data-filter="critical">Critical</button>
@@ -108,16 +105,15 @@ async function analyze() {
           </div>
         `;
 
-        // expand / collapse
         issue.querySelector(".issue-header").addEventListener("click", () => {
-          const isOpen = issue.classList.contains("open");
+          const open = issue.classList.contains("open");
 
           document.querySelectorAll(".issue").forEach(i => {
             i.classList.remove("open");
             i.querySelector(".toggle").textContent = "+";
           });
 
-          if (!isOpen) {
+          if (!open) {
             issue.classList.add("open");
             issue.querySelector(".toggle").textContent = "−";
           }
@@ -127,10 +123,8 @@ async function analyze() {
       });
     }
 
-    // initial render
     renderIssues();
 
-    // filter buttons logic
     document.querySelectorAll(".filter-btn").forEach(btn => {
       btn.addEventListener("click", () => {
         document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
