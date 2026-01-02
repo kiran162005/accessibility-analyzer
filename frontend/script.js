@@ -7,9 +7,7 @@ async function analyze() {
     return;
   }
 
-  result.innerHTML = `
-    <div class="card">⏳ Analyzing accessibility...</div>
-  `;
+  result.innerHTML = `<div class="card">⏳ Analyzing accessibility...</div>`;
 
   try {
     const res = await fetch(
@@ -17,7 +15,11 @@ async function analyze() {
     );
     const data = await res.json();
 
+    console.log("Violations count:", data.violations.length);
+    console.log("Violations array:", data.violations);
+
     const score = data.accessibilityScore;
+
     let scoreClass = "score-good";
     let label = "Good Accessibility";
 
@@ -30,11 +32,10 @@ async function analyze() {
       label = "Poor Accessibility";
     }
 
-    let html = `
+    // ---------- BASE LAYOUT ----------
+    result.innerHTML = `
       <div class="card score-section">
-        <div class="score-circle ${scoreClass}">
-          ${score}
-        </div>
+        <div class="score-circle ${scoreClass}">${score}</div>
         <div class="score-info">
           <h2>${label}</h2>
           <p>${data.violationsCount} accessibility issues detected</p>
@@ -58,32 +59,37 @@ async function analyze() {
 
       <div class="card">
         <h2>Issue Details</h2>
+        <div id="issuesContainer"></div>
+      </div>
     `;
 
-    if (data.violationsCount === 0) {
-      html += `<p>✅ No accessibility issues found.</p>`;
-    } else {
-      data.violations.forEach(v => {
-        html += `
-          <div class="issue ${v.impact}">
-            <span class="badge ${v.impact}">
-              ${v.impact.toUpperCase()}
-            </span><br />
-            <strong>${v.id}</strong><br />
-            ${v.description}<br /><br />
-            Affected elements: ${v.nodesAffected}<br />
-            <a href="${v.helpUrl}" target="_blank">Learn how to fix</a>
-          </div>
-        `;
-      });
+    // ---------- APPEND ISSUES SAFELY ----------
+    const issuesContainer = document.getElementById("issuesContainer");
+
+    if (data.violations.length === 0) {
+      issuesContainer.innerHTML = `<p>✅ No accessibility issues found.</p>`;
+      return;
     }
 
-    html += `</div>`;
-    result.innerHTML = html;
+    data.violations.forEach((v, index) => {
+      const issueDiv = document.createElement("div");
+      issueDiv.className = `issue ${v.impact}`;
+
+      issueDiv.innerHTML = `
+        <span class="badge ${v.impact}">
+          ${v.impact.toUpperCase()}
+        </span><br />
+        <strong>${index + 1}. ${v.id}</strong><br />
+        ${v.description}<br /><br />
+        <strong>Affected elements:</strong> ${v.nodesAffected}<br />
+        <a href="${v.helpUrl}" target="_blank">Learn how to fix</a>
+      `;
+
+      issuesContainer.appendChild(issueDiv);
+    });
 
   } catch (err) {
-    result.innerHTML = `
-      <div class="card">❌ Failed to analyze website</div>
-    `;
+    console.error(err);
+    result.innerHTML = `<div class="card">❌ Failed to analyze website</div>`;
   }
 }
