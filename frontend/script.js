@@ -15,9 +15,6 @@ async function analyze() {
     );
     const data = await res.json();
 
-    console.log("Violations count:", data.violations.length);
-    console.log("Violations array:", data.violations);
-
     const score = data.accessibilityScore;
 
     let scoreClass = "score-good";
@@ -32,7 +29,7 @@ async function analyze() {
       label = "Poor Accessibility";
     }
 
-    // ---------- BASE LAYOUT ----------
+    // ---------- BASE UI ----------
     result.innerHTML = `
       <div class="card score-section">
         <div class="score-circle ${scoreClass}">${score}</div>
@@ -63,7 +60,6 @@ async function analyze() {
       </div>
     `;
 
-    // ---------- APPEND ISSUES SAFELY ----------
     const issuesContainer = document.getElementById("issuesContainer");
 
     if (data.violations.length === 0) {
@@ -71,21 +67,47 @@ async function analyze() {
       return;
     }
 
+    // ---------- EXPAND / COLLAPSE ISSUES ----------
     data.violations.forEach((v, index) => {
-      const issueDiv = document.createElement("div");
-      issueDiv.className = `issue ${v.impact}`;
+      const issue = document.createElement("div");
+      issue.className = `issue ${v.impact}`;
 
-      issueDiv.innerHTML = `
-        <span class="badge ${v.impact}">
-          ${v.impact.toUpperCase()}
-        </span><br />
-        <strong>${index + 1}. ${v.id}</strong><br />
-        ${v.description}<br /><br />
-        <strong>Affected elements:</strong> ${v.nodesAffected}<br />
-        <a href="${v.helpUrl}" target="_blank">Learn how to fix</a>
+      issue.innerHTML = `
+        <div class="issue-header">
+          <div>
+            <span class="badge ${v.impact}">
+              ${v.impact.toUpperCase()}
+            </span>
+            <strong>${index + 1}. ${v.id}</strong>
+          </div>
+          <div class="toggle">+</div>
+        </div>
+
+        <div class="issue-details">
+          ${v.description}<br /><br />
+          <strong>Affected elements:</strong> ${v.nodesAffected}<br />
+          <a href="${v.helpUrl}" target="_blank">Learn how to fix</a>
+        </div>
       `;
 
-      issuesContainer.appendChild(issueDiv);
+      // toggle logic
+      issue.querySelector(".issue-header").addEventListener("click", () => {
+        const isOpen = issue.classList.contains("open");
+
+        // close all others
+        document.querySelectorAll(".issue").forEach(i => {
+          i.classList.remove("open");
+          i.querySelector(".toggle").textContent = "+";
+        });
+
+        // toggle current
+        if (!isOpen) {
+          issue.classList.add("open");
+          issue.querySelector(".toggle").textContent = "−";
+        }
+      });
+
+      issuesContainer.appendChild(issue);
     });
 
   } catch (err) {
