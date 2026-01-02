@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Accessibility Analyzer</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      padding: 40px;
+    }
+    input, button {
+      padding: 10px;
+      font-size: 16px;
+    }
+    button {
+      cursor: pointer;
+    }
+    .result {
+      margin-top: 20px;
+      background: white;
+      padding: 20px;
+      border-radius: 5px;
+    }
+    .issue {
+      border-bottom: 1px solid #ddd;
+      padding: 10px 0;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>♿ Accessibility Analyzer</h1>
+
+  <input id="urlInput" type="text" placeholder="Enter website URL" size="40">
+  <button onclick="analyze()">Analyze</button>
+
+  <div id="output" class="result"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>
