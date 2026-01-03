@@ -3,168 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>Accessibility Analyzer</title>
-
-  <style>
-    :root {
-      --primary: #6366f1;
-      --bg: #f8fafc;
-      --card: rgba(255,255,255,0.95);
-      --text: #0f172a;
-      --muted: #64748b;
-      --good: #22c55e;
-      --medium: #facc15;
-      --bad: #ef4444;
-    }
-
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      font-family: "Inter", "Segoe UI", sans-serif;
-      background: var(--bg);
-      color: var(--text);
-    }
-
-    header {
-      background: linear-gradient(135deg, #6366f1, #4338ca);
-      padding: 60px 20px;
-      color: white;
-      text-align: center;
-    }
-
-    .container {
-      max-width: 1000px;
-      margin: -40px auto 40px;
-      padding: 0 20px;
-    }
-
-    .card {
-      background: var(--card);
-      border-radius: 16px;
-      padding: 30px;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.08);
-      margin-bottom: 30px;
-    }
-
-    .input-row {
-      display: flex;
-      gap: 12px;
-    }
-
-    input {
-      flex: 1;
-      padding: 14px;
-      border-radius: 10px;
-      border: 1px solid #e5e7eb;
-      font-size: 16px;
-    }
-
-    button {
-      padding: 14px 22px;
-      border-radius: 10px;
-      border: none;
-      background: var(--primary);
-      color: white;
-      font-size: 16px;
-      cursor: pointer;
-    }
-
-    /* SCORE */
-    .score-section {
-      display: flex;
-      align-items: center;
-      gap: 30px;
-    }
-
-    .score-circle {
-      width: 120px;
-      height: 120px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 32px;
-      font-weight: bold;
-      color: white;
-    }
-
-    .score-good { background: var(--good); }
-    .score-medium { background: var(--medium); color: #333; }
-    .score-bad { background: var(--bad); }
-
-    /* CATEGORY SCORES */
-    .summary {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 16px;
-    }
-
-    .summary-card {
-      background: #f1f5f9;
-      padding: 18px;
-      border-radius: 12px;
-      text-align: center;
-    }
-
-    /* FILTERS */
-    .filters {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 16px;
-    }
-
-    .filter-btn {
-      padding: 8px 14px;
-      border-radius: 999px;
-      border: 1px solid #c7d2fe;
-      background: #eef2ff;
-      color: #1e1b4b;
-      cursor: pointer;
-      font-size: 14px;
-    }
-
-    .filter-btn.active {
-      background: var(--primary);
-      color: white;
-    }
-
-    /* ISSUES */
-    .issue {
-      background: #f8fafc;
-      border-left: 6px solid #e5e7eb;
-      border-radius: 10px;
-      padding: 16px;
-      margin-top: 12px;
-    }
-
-    .issue.serious { border-color: #f97316; }
-    .issue.moderate { border-color: #facc15; }
-    .issue.critical { border-color: #ef4444; }
-
-    .issue-header {
-      display: flex;
-      justify-content: space-between;
-      cursor: pointer;
-      font-weight: 600;
-    }
-
-    .issue-details { display: none; margin-top: 10px; }
-
-    .issue.open .issue-details { display: block; }
-
-    /* PDF + KEYBOARD */
-    .download-btn {
-      margin-top: 20px;
-      background: #16a34a;
-    }
-
-    .kb-box {
-      margin-top: 14px;
-      padding: 14px;
-      background: #f1f5f9;
-      border-radius: 8px;
-    }
-  </style>
+  <link rel="stylesheet" href="style.css" />
 </head>
 
 <body>
@@ -176,6 +15,7 @@
 
 <div class="container">
 
+  <!-- URL INPUT -->
   <div class="card">
     <div class="input-row">
       <input id="urlInput" placeholder="Enter website URL (https://...)" />
@@ -183,6 +23,7 @@
     </div>
   </div>
 
+  <!-- RESULTS -->
   <div id="result"></div>
 
 </div>
