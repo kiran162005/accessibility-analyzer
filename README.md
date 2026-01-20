@@ -162,4 +162,5 @@ Downloads a formatted PDF accessibility audit report.
 ## 👤 Author
 Kiran T
 Computer Science & Engineering Student
+
 Accessibility • Web Development • Software Engineering
