@@ -76,9 +76,9 @@ This project helps developers and organizations build **inclusive, accessible, a
 - PDFKit (PDF generation)
 
 ---
-```
-bash
+
 ## 📂 Project Structure
+```
 accessibility-analyzer/
 │
 ├── backend/
