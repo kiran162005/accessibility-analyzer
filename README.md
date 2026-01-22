@@ -96,6 +96,7 @@ accessibility-analyzer/
 ```
 
 ## ⚙️ Installation & Setup
+```
 1️⃣ Clone the Repository
 git clone https://github.com/your-username/accessibility-analyzer.git
 cd accessibility-analyzer
@@ -103,7 +104,7 @@ cd accessibility-analyzer
 npm install
 3️⃣ Start the Backend Server
 npm start
-
+```
 **Server runs at:**
 
 http://localhost:3000
